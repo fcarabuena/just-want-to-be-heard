@@ -10,7 +10,8 @@ function env_value(string $key, string $default = ''): string
 
 define('APP_NAME', 'I Just Want To Be Heard');
 define('APP_ROOT', __DIR__ . '/..');
-define('APP_URL', rtrim(env_value('APP_URL', 'http://localhost/just-want-to-be-heard'), '/'));
+// Render sets RENDER_EXTERNAL_URL to the service's public address, so APP_URL only needs setting for a custom domain.
+define('APP_URL', rtrim(env_value('APP_URL', env_value('RENDER_EXTERNAL_URL', 'http://localhost/just-want-to-be-heard')), '/'));
 // Path part of APP_URL: "/just-want-to-be-heard" on XAMPP, "" when the site runs at the root of a domain.
 define('APP_BASE_PATH', rtrim((string) parse_url(APP_URL, PHP_URL_PATH), '/'));
 // Folder name older rows in the database were saved with, e.g. "/just-want-to-be-heard/uploads/videos/a.mp4".

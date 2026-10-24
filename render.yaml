@@ -1,0 +1,24 @@
+# Render Blueprint: Dashboard > New > Blueprint > pick this repo. Only DB_PASS has to be typed in.
+services:
+  - type: web
+    name: just-want-to-be-heard
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: DB_HOST
+        value: mysql-1a99ea1f-justwanttobeheard.c.aivencloud.com
+      - key: DB_PORT
+        value: "27689"
+      - key: DB_NAME
+        value: just_want_to_be_heard
+      - key: DB_USER
+        value: avnadmin
+      - key: DB_SSL
+        value: "true"
+      - key: DB_SSL_CA
+        value: /var/www/html/config/aiven-ca.pem
+      - key: DB_PASS
+        sync: false

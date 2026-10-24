@@ -13,3 +13,6 @@ desktop.ini
 # Downloaded database certificates (paste the text into Render instead)
 ca.pem
 *.pem
+
+# The database CA certificate is public (not a secret); the site needs it to verify the database.
+!config/aiven-ca.pem
