@@ -8,3 +8,4 @@ Dockerfile
 .env
 .php-preview-router.php
 test-db.php
+database/import.php
