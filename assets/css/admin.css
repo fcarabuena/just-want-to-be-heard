@@ -1076,3 +1076,14 @@ button.logout-link {
 }
 
 .placement-controls input[type="range"] { flex: 1 1 240px; }
+
+/* Tutorials page */
+.tutorial-jump { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 8px; }
+.tutorial-jump a { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-alt); color: var(--text); text-decoration: none; font-size: 0.9rem; }
+.tutorial-jump a:hover { border-color: var(--gold); color: var(--gold-soft); }
+.tutorial-card { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr); gap: 24px; align-items: start; margin-top: 22px; padding: 18px; border: 1px solid var(--border); border-radius: 18px; background: var(--bg-soft); scroll-margin-top: 20px; }
+.tutorial-video video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #000; }
+.tutorial-text h3 { margin: 6px 0 6px; font-size: 1.3rem; color: var(--text); }
+.tutorial-text ol { margin: 14px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.6; }
+.tutorial-text li + li { margin-top: 6px; }
+@media (max-width: 1000px) { .tutorial-card { grid-template-columns: 1fr; } }

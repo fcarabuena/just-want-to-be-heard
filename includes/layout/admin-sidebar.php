@@ -16,6 +16,9 @@ $navSections = [
         ['reflections', '? Reflection Questions'],
         ['choices', '⑂ Story Choices'],
     ],
+    'Help' => [
+        ['tutorials', '🎓 Tutorials'],
+    ],
     'System' => [
         ['settings', '⚙ Settings'],
     ],

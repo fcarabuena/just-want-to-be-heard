@@ -173,7 +173,7 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                         <?php foreach (['insight' => 'Look closer (insight)', 'thought' => "Riley's thought", 'red_flag' => 'Red flag (counts toward the red-flag score)'] as $typeKey => $typeLabel): ?>
                             <option value="<?php echo $typeKey; ?>" <?php echo (($values['element_type'] ?? 'insight') === $typeKey) ? 'selected' : ''; ?>><?php echo htmlspecialchars($typeLabel); ?></option>
                         <?php endforeach; ?>
-                    </select>" placeholder="hotspot, clue, portal...">
+                    </select>
                 </div>
 
                 <div class="form-field">
@@ -275,7 +275,7 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                     <span id="placementTime">0.0s</span>
                     <button type="button" class="secondary-link-btn" id="placementUseTime">Use this time for "Appears At"</button>
                 </div>
-                <small class="inline-note">Scrub to the right moment, then drag on the frame to draw the clickable area. X, Y, Width and Height fill in automatically, measured in 1920 x 1080 frame pixels.</small>
+                <small class="inline-note">Scrub to the right moment, then drag on the frame to draw the clickable area. X, Y, Width and Height fill in automatically, measured in 1920 x 1080 frame pixels. <a href="<?php echo APP_BASE_PATH; ?>/admin/tutorials/index.php#hotspot-add">Watch the 2-minute tutorial</a></small>
             </div>
 
             <div class="form-field checkbox-field">
