@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+Dockerfile
+.vscode
+.idea
+*.md
+.env
+.php-preview-router.php
+test-db.php

@@ -1,0 +1,15 @@
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local-only helpers and secrets
+.env
+.php-preview-router.php
+*.log
+
+# Downloaded database certificates (paste the text into Render instead)
+ca.pem
+*.pem
