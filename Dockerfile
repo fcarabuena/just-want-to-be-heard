@@ -23,6 +23,6 @@ RUN mkdir -p /var/www/html/uploads/videos /var/www/html/uploads/branding /var/ww
     && chown -R www-data:www-data /var/www/html/uploads
 
 # Render tells the app which port to use through $PORT (80 when run locally).
-CMD sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf \
-    && sed -i "s/:80>/:${PORT:-80}>/" /etc/apache2/sites-available/000-default.conf \
-    && apache2-foreground
+COPY docker/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh && rm -rf /var/www/html/docker
+CMD ["/usr/local/bin/start.sh"]
