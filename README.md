@@ -48,46 +48,5 @@ The story is fully editable without code, in a login-protected admin area at `/a
 
 **Play the Story** in the sidebar opens the player for testing.
 
-## Built with
 
-- PHP 8 (no framework) and MySQL / MariaDB
-- Plain HTML, CSS and JavaScript for the player and admin
-- Docker (PHP 8.2 + Apache) for hosting on [Render](https://render.com), with the database on [Aiven](https://aiven.io)
 
-## Run it locally (XAMPP)
-
-1. Put this folder in `C:\xampp\htdocs\just-want-to-be-heard` and start **Apache** and **MySQL** in XAMPP.
-2. In phpMyAdmin (or the MySQL command line), import `database/schema.sql`, then `database/demo_seed.sql` for the six-scene demo story.
-3. Open http://localhost/just-want-to-be-heard/.
-4. Open http://localhost/just-want-to-be-heard/admin/. The first visit asks you to create the admin account.
-
-The database settings default to XAMPP's (`root`, no password, database `just_want_to_be_heard`). See [INTERACTIVITY-GUIDE.md](INTERACTIVITY-GUIDE.md) for how to build scenes, and [TUTORIAL.md](TUTORIAL.md) for a step-by-step guide to adding your own animation and hotspots.
-
-## Deploy online
-
-The repository is ready for Render:
-
-- `Dockerfile` builds the site; `render.yaml` is a Render Blueprint with the settings filled in.
-- The app reads `APP_URL`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`, `DB_SSL` and `DB_SSL_CA` from environment variables, and falls back to the XAMPP values when they are not set.
-- `database/import.php` loads the schema and demo story into a hosted MySQL 8 database from the command line.
-
-On a fresh deployment, open `/admin/` straight away and create the admin account: the first visitor to the setup page becomes the admin.
-
-Videos uploaded through the live admin are lost when Render redeploys, because its disk is temporary. Commit final animations to `uploads/videos/` instead.
-
-## Project structure
-
-```
-admin/          Admin studio (scenes, videos, hotspots, questions, choices, settings, tutorials)
-viewer/         The interactive player
-assets/         CSS, JavaScript and tutorial videos
-config/         App and database settings (environment variables with XAMPP fallbacks)
-database/       schema.sql, demo_seed.sql and the import script
-includes/       Login, schema upgrades and admin layout
-uploads/        Animations and images (demo placeholders in uploads/videos/demo/)
-```
-
-## Before showing it publicly
-
-- Check every phone number in **Settings → Public Experience → Help Resources** with your adviser.
-- Replace the placeholder demo videos and text with the final animation.
