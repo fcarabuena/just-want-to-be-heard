@@ -103,7 +103,7 @@ function validateUploadedVideoFile(array $file): array
     }
 
     if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
-        throw new RuntimeException('The video upload failed. Please try again.');
+        throw new RuntimeException(describeVideoUploadError((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE)));
     }
 
     $size = filesize($file['tmp_name']);
@@ -134,9 +134,146 @@ function validateUploadedVideoFile(array $file): array
     ];
 }
 
+/** Explains a PHP upload error code in words the admin can act on. */
+function describeVideoUploadError(int $code): string
+{
+    switch ($code) {
+        case UPLOAD_ERR_INI_SIZE:
+        case UPLOAD_ERR_FORM_SIZE:
+            return 'This video is bigger than the server accepts (' . ini_get('upload_max_filesize') . '). Export a smaller file and try again.';
+        case UPLOAD_ERR_PARTIAL:
+            return 'The upload was interrupted before it finished. Check your connection and try again.';
+        case UPLOAD_ERR_NO_FILE:
+            return 'Please select a video file to upload.';
+        default:
+            return 'The video upload failed. Please try again.';
+    }
+}
+
+/** True when PHP dropped the whole form because the request was bigger than post_max_size. */
+function requestExceededPostLimit(): bool
+{
+    return $_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST) && empty($_FILES) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0;
+}
+
+// ---------- Cloudinary (permanent video storage for hosts with a temporary disk, such as Render) ----------
+
+// Cloudinary's free plan accepts videos up to 100 MB per file.
+define('CLOUDINARY_MAX_VIDEO_BYTES', 100 * 1024 * 1024);
+
+/** Cloudinary account from CLOUDINARY_URL (cloudinary://API_KEY:API_SECRET@CLOUD_NAME), or null to keep files on this server. */
+function getCloudinaryConfig(): ?array
+{
+    $url = env_value('CLOUDINARY_URL');
+    if ($url === '') {
+        return null;
+    }
+
+    $parts = parse_url($url);
+    if (($parts['scheme'] ?? '') !== 'cloudinary' || empty($parts['user']) || empty($parts['pass']) || empty($parts['host'])) {
+        throw new RuntimeException('CLOUDINARY_URL is not in the form cloudinary://API_KEY:API_SECRET@CLOUD_NAME. Copy it again from the Cloudinary dashboard.');
+    }
+
+    return ['cloud' => $parts['host'], 'key' => urldecode($parts['user']), 'secret' => urldecode($parts['pass'])];
+}
+
+function isCloudinaryUrl(?string $path): bool
+{
+    return is_string($path) && preg_match('#^https://res\.cloudinary\.com/#i', $path) === 1;
+}
+
+/** Turns a Cloudinary error into a clear message, especially when the account is out of space. */
+function describeCloudinaryError(string $message, int $status): string
+{
+    if (preg_match('/quota|storage|usage|limit exceeded|exceeded|credits|plan/i', $message)) {
+        return 'Cloud video storage is full, so the video was not saved. Remove videos you no longer use (Video Library → Remove video), or free up space in your Cloudinary account, then try again. (Cloudinary said: ' . $message . ')';
+    }
+    if (preg_match('/file size too large|too large/i', $message)) {
+        return 'This video is too large for cloud storage (the free plan allows up to 100 MB per video). Export a smaller file and try again.';
+    }
+    if ($status === 401 || preg_match('/api_key|signature|invalid.*key|unknown api/i', $message)) {
+        return 'Cloud storage rejected the login. Check that CLOUDINARY_URL on the server is copied exactly from Cloudinary. (Cloudinary said: ' . $message . ')';
+    }
+
+    return 'Cloud storage could not save the video: ' . $message;
+}
+
+/** Signed call to Cloudinary's video API ("upload" or "destroy"). */
+function cloudinaryRequest(array $config, string $action, array $params, ?CURLFile $file = null): array
+{
+    $params['timestamp'] = (string) time();
+    ksort($params);
+    $pairs = [];
+    foreach ($params as $key => $value) {
+        $pairs[] = $key . '=' . $value;
+    }
+    $params['signature'] = sha1(implode('&', $pairs) . $config['secret']);
+    $params['api_key'] = $config['key'];
+    if ($file !== null) {
+        $params['file'] = $file;
+    }
+
+    $curl = curl_init('https://api.cloudinary.com/v1_1/' . rawurlencode($config['cloud']) . '/video/' . $action);
+    curl_setopt_array($curl, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $params,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 20,
+        CURLOPT_TIMEOUT => 600,
+    ]);
+    $body = curl_exec($curl);
+    $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($curl);
+    curl_close($curl);
+
+    if ($body === false) {
+        throw new RuntimeException('Could not reach cloud video storage (' . $curlError . '). Check the connection and try again.');
+    }
+
+    $data = json_decode((string) $body, true);
+    if (!is_array($data) || $status >= 400 || isset($data['error'])) {
+        $message = is_array($data) ? (string) ($data['error']['message'] ?? 'HTTP ' . $status) : 'HTTP ' . $status;
+        throw new RuntimeException(describeCloudinaryError($message, $status));
+    }
+
+    return $data;
+}
+
+/** Public ID of an uploaded Cloudinary video, taken from its delivery URL. */
+function cloudinaryPublicIdFromUrl(string $url): ?string
+{
+    return preg_match('#/video/upload/(?:v\d+/)?(.+)\.[a-z0-9]+$#i', $url, $match) === 1 ? $match[1] : null;
+}
+
 function storeUploadedVideoFile(array $file): array
 {
     $validated = validateUploadedVideoFile($file);
+
+    $cloudinary = getCloudinaryConfig();
+    if ($cloudinary !== null) {
+        if ($validated['size'] > CLOUDINARY_MAX_VIDEO_BYTES) {
+            throw new RuntimeException(sprintf('This video is %s. Cloud storage accepts videos up to 100 MB, so export a smaller file (for example a lower bitrate) and try again.', formatVideoFileSize((int) $validated['size'])));
+        }
+
+        $filename = buildSafeVideoFilename($file['name']);
+        $result = cloudinaryRequest($cloudinary, 'upload', [
+            'folder' => 'just-want-to-be-heard',
+            'public_id' => pathinfo($filename, PATHINFO_FILENAME),
+        ], new CURLFile($validated['tmp_name'], $validated['mime_type'], $filename));
+
+        if (empty($result['secure_url'])) {
+            throw new RuntimeException('Cloud storage did not return a link for the video. Please try again.');
+        }
+
+        return [
+            'filename' => $filename,
+            'file_path' => (string) $result['secure_url'],
+            'mime_type' => $validated['mime_type'],
+            'file_size' => (int) ($result['bytes'] ?? $validated['size']),
+            'extension' => $validated['extension'],
+            'absolute_path' => null,
+        ];
+    }
 
     $uploadDir = ensureVideoUploadDirectory();
     $filename = buildSafeVideoFilename($file['name']);
@@ -164,6 +301,20 @@ function deleteVideoFileIfExists(?string $filePath): void
         return;
     }
 
+    if (isCloudinaryUrl($filePath)) {
+        // Removing the cloud copy frees storage space; a failure here must not block deleting the video record.
+        $publicId = cloudinaryPublicIdFromUrl($filePath);
+        try {
+            $cloudinary = getCloudinaryConfig();
+            if ($cloudinary !== null && $publicId !== null) {
+                cloudinaryRequest($cloudinary, 'destroy', ['public_id' => $publicId, 'invalidate' => 'true']);
+            }
+        } catch (RuntimeException $e) {
+            error_log('Cloudinary delete failed for ' . $publicId . ': ' . $e->getMessage());
+        }
+        return;
+    }
+
     $relative = ltrim((string) $filePath, '/');
     if ($relative === '') {
         return;
@@ -182,4 +333,16 @@ function deleteVideoFileIfExists(?string $filePath): void
     if (is_file($absolutePath)) {
         @unlink($absolutePath);
     }
+}
+
+/** True when a video stored on this server no longer has its file (e.g. wiped by a host restart). */
+function videoFileIsMissing(?string $filePath): bool
+{
+    if (empty($filePath) || preg_match('#^https?://#i', $filePath) === 1) {
+        return false;
+    }
+
+    $relative = substr(app_asset_url($filePath), strlen(APP_BASE_PATH));
+
+    return !is_file(APP_ROOT . $relative);
 }

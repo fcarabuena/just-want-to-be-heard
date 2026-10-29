@@ -420,6 +420,28 @@ html, body { margin: 0; height: 100%; }
 
 @keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
 
+/* ---------- thank-you card (after the ending) ---------- */
+
+.thankyou-card { width: min(560px, 100%); text-align: center; }
+.thankyou-mark {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    font-size: 26px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.thankyou-contacts { margin: 0 0 20px; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.04); text-align: left; }
+.thankyou-contacts h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+.thankyou-contacts ul { margin: 0; padding-left: 18px; line-height: 1.6; color: var(--ink); }
+.thankyou-contacts li + li { margin-top: 4px; }
+.thankyou-actions { justify-content: center; }
+.thankyou-actions .btn { text-decoration: none; text-align: center; }
+
 .player-message { max-width: 640px; margin: 15vh auto; padding: 24px; text-align: center; }
 .player-message p { color: var(--muted); }
 
@@ -427,6 +449,13 @@ html, body { margin: 0; height: 100%; }
     .hud { top: 8px; right: 8px; gap: 6px; }
     .hud-btn { min-width: 34px; height: 34px; font-size: 13px; padding: 0 10px; }
     .explore-bar { border-radius: 16px; flex-direction: column; gap: 8px; text-align: center; }
+    .thankyou-actions { flex-direction: column; }
+    .thankyou-actions .btn { width: 100%; }
+}
+
+/* Portrait phones and tablets: the 16:9 video is only a thin strip, so cards use the whole screen. */
+@media (orientation: portrait) {
+    .overlay { position: fixed; padding: 72px 16px 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

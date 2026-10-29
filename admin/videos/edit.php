@@ -33,7 +33,9 @@ $values = [
     'file_path' => $video['file_path'],
 ];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (requestExceededPostLimit()) {
+    $errors[] = 'This video is bigger than the server accepts (' . ini_get('post_max_size') . '). Export a smaller file and try again.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['title'] = trim((string) ($_POST['title'] ?? $video['title']));
     $values['mime_type'] = trim((string) ($_POST['mime_type'] ?? ($video['mime_type'] ?? 'video/mp4')));
     $values['file_size'] = trim((string) ($_POST['file_size'] ?? $video['file_size']));
@@ -62,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($replaceVideoFile) {
         if ($_FILES['video_file']['error'] !== UPLOAD_ERR_OK) {
-            $errors[] = 'The replacement video upload failed. Please try again.';
+            $errors[] = describeVideoUploadError((int) $_FILES['video_file']['error']);
         } else {
             try {
                 $uploadedVideo = storeUploadedVideoFile($_FILES['video_file']);

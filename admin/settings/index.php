@@ -55,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'maintenance_message' => trim((string) ($_POST['maintenance_message'] ?? 'The public experience is temporarily unavailable.')),
         'content_note_text' => trim((string) ($_POST['content_note_text'] ?? '')),
         'help_resources_text' => trim((string) ($_POST['help_resources_text'] ?? '')),
+        'thankyou_heading' => trim((string) ($_POST['thankyou_heading'] ?? '')),
+        'thankyou_message' => trim((string) ($_POST['thankyou_message'] ?? '')),
     ];
 
     foreach (['project_logo', 'project_favicon'] as $assetKey) {
@@ -208,6 +210,17 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                     <label for="help_resources_text">"Need to talk?" Help Resources (one per line)</label>
                     <textarea id="help_resources_text" name="help_resources_text" rows="5"><?php echo htmlspecialchars(setting_value($settings, 'help_resources_text', '')); ?></textarea>
                     <small class="inline-note">Double-check every hotline number with your adviser before the public showing.</small>
+                </div>
+
+                <div class="form-field">
+                    <label for="thankyou_heading">Thank-you Pop-up Heading (shown when the viewer finishes the story)</label>
+                    <input id="thankyou_heading" name="thankyou_heading" type="text" maxlength="255" value="<?php echo htmlspecialchars(setting_value($settings, 'thankyou_heading', "Thank you for listening to Riley's story")); ?>">
+                </div>
+
+                <div class="form-field">
+                    <label for="thankyou_message">Thank-you Pop-up Message</label>
+                    <textarea id="thankyou_message" name="thankyou_message" rows="3"><?php echo htmlspecialchars(setting_value($settings, 'thankyou_message', '')); ?></textarea>
+                    <small class="inline-note">The pop-up also lists the help resources above that include a phone number, and has "Play again" and "Exit" buttons.</small>
                 </div>
             </div>
 

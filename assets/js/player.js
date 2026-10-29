@@ -34,6 +34,7 @@
     let current = null;
     let firedTimed = new Set();
     let exploring = false;
+    let finished = false; // true once an ending card has been shown
     let resumeAfterOverlay = false;
 
     // ---------- journey (kept only in this browser tab) ----------
@@ -90,8 +91,9 @@
 
         firedTimed = new Set();
         exploring = false;
+        finished = false;
         hotspotLayer.innerHTML = '';
-        ['exploreBar', 'insightOverlay', 'reflectionOverlay', 'choiceOverlay', 'endingOverlay'].forEach((el) => hide($(el)));
+        ['exploreBar', 'insightOverlay', 'reflectionOverlay', 'choiceOverlay', 'endingOverlay', 'thankyouOverlay'].forEach((el) => hide($(el)));
         updateRedFlagCounter();
 
         stage.classList.add('fade-out');
@@ -343,11 +345,7 @@
 
         const list = $('journeyList');
         list.innerHTML = '';
-        if (!journey.choices.length) {
-            const li = document.createElement('li');
-            li.textContent = 'You watched the story without making a choice.';
-            list.appendChild(li);
-        }
+        list.hidden = !journey.choices.length;
         journey.choices.forEach((c) => {
             const li = document.createElement('li');
             li.innerHTML = '<span class="journey-scene"></span> <span class="journey-choice"></span>';
@@ -364,7 +362,32 @@
         $('rewindButton').hidden = !journey.lastChoiceScene;
         hide($('redflagCounter'));
         show($('endingOverlay'));
+        finished = true;
     }
+
+    // ---------- thank-you (after the ending recap, before leaving) ----------
+
+    function showThankYou() {
+        hide($('endingOverlay'));
+        show($('thankyouOverlay'));
+        $('playAgainButton').focus();
+    }
+
+    function restartStory() {
+        journey = emptyJourney();
+        saveJourney();
+        playScene(STORY.start);
+    }
+
+    $('finishButton').addEventListener('click', showThankYou);
+    $('playAgainButton').addEventListener('click', restartStory);
+    $('leaveButton').addEventListener('click', (e) => {
+        // Once the story is over, say thank you before the viewer leaves.
+        if (finished && $('thankyouOverlay').hidden) {
+            e.preventDefault();
+            showThankYou();
+        }
+    });
 
     $('rewindButton').addEventListener('click', () => {
         const sceneId = journey.lastChoiceScene;
@@ -375,11 +398,7 @@
         playScene(sceneId, { toChoices: true });
     });
 
-    $('restartButton').addEventListener('click', () => {
-        journey = emptyJourney();
-        saveJourney();
-        playScene(STORY.start);
-    });
+    $('restartButton').addEventListener('click', restartStory);
 
     // ---------- controls ----------
 

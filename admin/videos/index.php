@@ -84,6 +84,7 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                     $sizeMb = (int) ($video['file_size'] ?? 0) > 0 ? round((int) $video['file_size'] / 1048576, 2) : 0;
                     $sceneLabel = !empty($video['scene_title']) ? 'Scene ' . (int) $video['scene_number'] . ' - ' . $video['scene_title'] : 'Not assigned';
                     $previewPath = app_asset_url($video['file_path'] ?? '');
+                    $fileMissing = videoFileIsMissing($video['file_path'] ?? '');
                     ?>
                     <article class="scene-card video-card">
                         <div class="scene-card-top">
@@ -96,7 +97,15 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                         </div>
 
                         <div class="scene-card-body">
-                            <?php if (!empty($previewPath)): ?>
+                            <?php if ($fileMissing): ?>
+                                <div class="scene-preview">
+                                    <div class="scene-preview-empty video-missing">
+                                        <div class="preview-icon">!</div>
+                                        <strong>FILE MISSING</strong>
+                                        <span>The server lost this file. Click Edit and choose the file again under Replace Video.</span>
+                                    </div>
+                                </div>
+                            <?php elseif (!empty($previewPath)): ?>
                                 <div class="scene-preview">
                                     <video controls preload="metadata" playsinline>
                                         <source src="<?php echo htmlspecialchars($previewPath); ?>" type="<?php echo htmlspecialchars($video['mime_type'] ?: 'video/mp4'); ?>">
@@ -153,7 +162,7 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
 
                         <div class="scene-actions">
                             <a href="<?php echo APP_BASE_PATH; ?>/admin/videos/edit.php?id=<?php echo (int) $video['video_id']; ?>" class="action-btn secondary">Edit</a>
-                            <a href="<?php echo APP_BASE_PATH; ?>/admin/videos/delete.php?id=<?php echo (int) $video['video_id']; ?>" class="action-btn danger">Delete</a>
+                            <a href="<?php echo APP_BASE_PATH; ?>/admin/videos/delete.php?id=<?php echo (int) $video['video_id']; ?>" class="action-btn danger">Remove video</a>
                         </div>
                     </article>
                 <?php endforeach; ?>

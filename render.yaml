@@ -22,3 +22,5 @@ services:
         value: /var/www/html/config/aiven-ca.pem
       - key: DB_PASS
         sync: false
+      - key: CLOUDINARY_URL
+        sync: false

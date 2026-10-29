@@ -17,7 +17,9 @@ $values = [
     'is_published' => 0,
 ];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (requestExceededPostLimit()) {
+    $errors[] = 'This video is bigger than the server accepts (' . ini_get('post_max_size') . '). Export a smaller file and try again.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $values['title'] = trim((string) ($_POST['title'] ?? ''));
     $values['mime_type'] = trim((string) ($_POST['mime_type'] ?? 'video/mp4'));
     $values['file_size'] = trim((string) ($_POST['file_size'] ?? ''));

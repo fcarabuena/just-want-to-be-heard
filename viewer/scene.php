@@ -16,6 +16,10 @@ $maintenanceMessage = get_setting($pdo, 'maintenance_message', 'The public exper
 $emptyStateMessage = get_setting($pdo, 'empty_state_message', 'No public scene is available yet.');
 $publicExperienceEnabled = get_setting($pdo, 'public_experience_enabled', '1', true);
 $helpResources = array_values(array_filter(array_map('trim', explode("\n", (string) get_setting($pdo, 'help_resources_text', '')))));
+$thankYouHeading = trim((string) get_setting($pdo, 'thankyou_heading', '')) ?: "Thank you for listening to Riley's story";
+$thankYouMessage = get_setting($pdo, 'thankyou_message', '');
+// The thank-you card lists only the help resources that have a number to call (e.g. 911, Bantay Bata 163).
+$thankYouContacts = array_values(array_filter($helpResources, static fn ($line) => preg_match('/\d/', $line) === 1)) ?: $helpResources;
 $defaultSceneId = (int) get_setting($pdo, 'default_scene_id', '0');
 
 $scenes = $pdo->query("
@@ -223,6 +227,31 @@ $playerData = [
                     <div class="ending-actions">
                         <button type="button" class="btn" id="rewindButton" hidden>Go back to your last choice</button>
                         <button type="button" class="btn btn-ghost" id="restartButton">Watch again from the start</button>
+                        <button type="button" class="btn" id="finishButton">Finish</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overlay" id="thankyouOverlay" hidden>
+                <div class="card thankyou-card" role="dialog" aria-modal="true" aria-labelledby="thankyouTitle">
+                    <div class="thankyou-mark" aria-hidden="true">♡</div>
+                    <h2 id="thankyouTitle"><?php echo htmlspecialchars($thankYouHeading); ?></h2>
+                    <?php if ($thankYouMessage !== ''): ?>
+                        <p><?php echo htmlspecialchars($thankYouMessage); ?></p>
+                    <?php endif; ?>
+                    <?php if ($thankYouContacts): ?>
+                        <div class="thankyou-contacts">
+                            <h3>Need someone to talk to?</h3>
+                            <ul>
+                                <?php foreach ($thankYouContacts as $contact): ?>
+                                    <li><?php echo htmlspecialchars($contact); ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                    <div class="ending-actions thankyou-actions">
+                        <button type="button" class="btn" id="playAgainButton">Play again</button>
+                        <a class="btn btn-ghost" id="exitButton" href="<?php echo APP_BASE_PATH; ?>/">Exit</a>
                     </div>
                 </div>
             </div>
@@ -237,7 +266,7 @@ $playerData = [
         </div>
 
         <nav class="hud" aria-label="Player controls">
-            <a class="hud-btn" href="<?php echo APP_BASE_PATH; ?>/" title="Leave the story" aria-label="Leave the story">✕</a>
+            <a class="hud-btn" id="leaveButton" href="<?php echo APP_BASE_PATH; ?>/" title="Leave the story" aria-label="Leave the story">✕</a>
             <button type="button" class="hud-btn" id="playPause" aria-label="Pause">❚❚</button>
             <button type="button" class="hud-btn" id="muteToggle" aria-label="Mute">🔊</button>
             <?php if ($viewerAllowFullscreen): ?>

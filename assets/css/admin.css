@@ -1087,3 +1087,7 @@ button.logout-link {
 .tutorial-text ol { margin: 14px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.6; }
 .tutorial-text li + li { margin-top: 6px; }
 @media (max-width: 1000px) { .tutorial-card { grid-template-columns: 1fr; } }
+
+/* Video Library: a video whose file is gone */
+.video-missing { border: 1px dashed var(--danger); color: var(--danger); text-align: center; padding: 0 16px; }
+.video-missing span { display: block; margin-top: 6px; color: var(--muted); font-size: 0.85rem; line-height: 1.4; }

@@ -127,6 +127,8 @@ function ensure_default_settings(PDO $pdo): void
         'maintenance_message' => 'The public experience is temporarily unavailable.',
         'content_note_text' => 'This story talks about online grooming, family conflict, and feeling alone. You can pause or leave at any time, and the "Need to talk?" button is always on screen.',
         'help_resources_text' => "Talk to a parent, guardian, teacher, or guidance counselor you trust.\nIn an emergency in the Philippines, call 911.\nBantay Bata 163: a free helpline for children and teens.\nIf someone online makes you uncomfortable: stop replying, save the messages, block, and tell an adult.",
+        'thankyou_heading' => "Thank you for listening to Riley's story",
+        'thankyou_message' => 'Being heard matters. If anything online ever makes you feel uncomfortable, unsafe, or pressured, it is never your fault. Talk to someone you trust.',
     ];
 
     $existing = load_settings_map($pdo);
