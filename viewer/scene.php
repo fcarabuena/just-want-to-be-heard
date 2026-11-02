@@ -241,6 +241,13 @@ $playerData = [
                 </div>
             </div>
 
+            <div class="overlay" id="videoErrorOverlay" hidden>
+                <div class="card video-error-card" role="alertdialog" aria-modal="true" aria-describedby="videoErrorText">
+                    <p id="videoErrorText">This part of the story couldn’t load.</p>
+                    <button type="button" class="btn" id="videoErrorContinue">Continue</button>
+                </div>
+            </div>
+
             <div class="overlay" id="thankyouOverlay" hidden>
                 <div class="card thankyou-card" role="dialog" aria-modal="true" aria-labelledby="thankyouTitle">
                     <div class="thankyou-mark" aria-hidden="true">♡</div>

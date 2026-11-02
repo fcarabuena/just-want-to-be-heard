@@ -35,6 +35,7 @@
     let firedTimed = new Set();
     let exploring = false;
     let finished = false; // true once an ending card has been shown
+    let loadTimer = null; // gives up on a scene video that never starts loading
     // Optional features (Settings → Scene Viewer). Off = no hotspot or choice data is sent at all.
     const FEATURES = STORY.features || { hotspots: true, choices: true };
     let resumeAfterOverlay = false;
@@ -95,13 +96,16 @@
         exploring = false;
         finished = false;
         hotspotLayer.innerHTML = '';
-        ['exploreBar', 'insightOverlay', 'reflectionOverlay', 'choiceOverlay', 'endingOverlay', 'thankyouOverlay'].forEach((el) => hide($(el)));
+        ['exploreBar', 'insightOverlay', 'reflectionOverlay', 'choiceOverlay', 'endingOverlay', 'thankyouOverlay', 'videoErrorOverlay'].forEach((el) => hide($(el)));
         updateRedFlagCounter();
 
         stage.classList.add('fade-out');
         setTimeout(() => {
             video.src = current.video;
             video.load();
+            // A connection that hangs never fires "error", so give up after 30 s with nothing loaded.
+            clearTimeout(loadTimer);
+            loadTimer = setTimeout(() => { if (video.readyState === 0) sceneFailedToLoad(); }, 30000);
             if (opts.toChoices) {
                 video.addEventListener('loadedmetadata', function jump() {
                     video.removeEventListener('loadedmetadata', jump);
@@ -117,6 +121,26 @@
             }
         }, 450);
     }
+
+    // ---------- a scene's video cannot load ----------
+
+    function sceneFailedToLoad() {
+        if (!current || !$('videoErrorOverlay').hidden) return;
+        clearTimeout(loadTimer);
+        stage.classList.remove('fade-out');
+        show($('videoErrorOverlay'));
+        $('videoErrorContinue').focus();
+    }
+
+    video.addEventListener('error', sceneFailedToLoad);
+    video.addEventListener('loadeddata', () => clearTimeout(loadTimer));
+
+    $('videoErrorContinue').addEventListener('click', () => {
+        // Skip the scene (and its questions, since it was not seen) and go on with the story.
+        hide($('videoErrorOverlay'));
+        hotspotLayer.innerHTML = '';
+        decideNext();
+    });
 
     function showSceneTitle() {
         if (!STORY.showTitle && !STORY.showNumber) return;

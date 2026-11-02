@@ -420,6 +420,11 @@ html, body { margin: 0; height: 100%; }
 
 @keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
 
+/* ---------- a scene video that could not load ---------- */
+
+.video-error-card { width: min(420px, 100%); text-align: center; }
+.video-error-card p { color: var(--ink); font-size: 17px; }
+
 /* ---------- thank-you card (after the ending) ---------- */
 
 .thankyou-card { width: min(560px, 100%); text-align: center; }
