@@ -1,5 +1,8 @@
 <?php
+require_once __DIR__ . '/../features.php';
+
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
+$features = story_features();
 $navSections = [
     'Overview' => [
         ['dashboard', '⌂ Dashboard'],
@@ -11,11 +14,11 @@ $navSections = [
         ['objects', '◆ Objects'],
         ['dialogues', '💬 Dialogues'],
     ],
-    'Interactivity' => [
-        ['interactive-elements', '◎ Hotspots'],
+    'Interactivity' => array_values(array_filter([
+        $features['hotspots'] ? ['interactive-elements', '◎ Hotspots'] : null,
         ['reflections', '? Reflection Questions'],
-        ['choices', '⑂ Story Choices'],
-    ],
+        $features['choices'] ? ['choices', '⑂ Story Choices'] : null,
+    ])),
     'Help' => [
         ['tutorials', '🎓 Tutorials'],
     ],

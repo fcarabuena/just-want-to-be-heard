@@ -1,9 +1,11 @@
 <?php
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/admin/settings/settings_helpers.php';
+require_once __DIR__ . '/includes/features.php';
 
 $pdo = getDatabaseConnection();
 ensure_default_settings($pdo);
+$features = story_features($pdo);
 
 $projectName = get_setting($pdo, 'project_name', APP_NAME);
 $projectSubtitle = get_setting($pdo, 'project_subtitle', 'Interactive Animation Studio');
@@ -97,14 +99,28 @@ if ($publicTheme === 'light') {
                             <strong>Watch</strong>
                             <p>Follow Riley, a teenager who just wants someone to listen, through <?php echo (int) $sceneCount; ?> animated scene<?php echo $sceneCount === 1 ? '' : 's'; ?>.</p>
                         </article>
-                        <article class="public-story-card">
-                            <strong>Explore</strong>
-                            <p>When the story pauses, tap the glowing spots to read Riley's thoughts and spot the red flags in his chats.</p>
-                        </article>
-                        <article class="public-story-card">
-                            <strong>Choose</strong>
-                            <p>Decide what Riley does next. Your choices lead to different endings.</p>
-                        </article>
+                        <?php if ($features['hotspots']): ?>
+                            <article class="public-story-card">
+                                <strong>Explore</strong>
+                                <p>When the story pauses, tap the glowing spots to read Riley's thoughts and spot the red flags in his chats.</p>
+                            </article>
+                        <?php else: ?>
+                            <article class="public-story-card">
+                                <strong>Pause and think</strong>
+                                <p>Some moments pause so you can answer a few questions about what Riley is going through.</p>
+                            </article>
+                        <?php endif; ?>
+                        <?php if ($features['choices']): ?>
+                            <article class="public-story-card">
+                                <strong>Choose</strong>
+                                <p>Decide what Riley does next. Your choices lead to different endings.</p>
+                            </article>
+                        <?php else: ?>
+                            <article class="public-story-card">
+                                <strong>Get support</strong>
+                                <p>The "Need to talk?" button is always on screen if anything in the story feels close to home.</p>
+                            </article>
+                        <?php endif; ?>
                     </div>
                 </section>
             </div>

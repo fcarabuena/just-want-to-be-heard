@@ -1,9 +1,12 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../admin/settings/settings_helpers.php';
+require_once __DIR__ . '/../includes/features.php';
 
 $pdo = getDatabaseConnection();
 ensure_default_settings($pdo);
+// Switched-off features send no data to the player, so viewers never see them (Settings → Scene Viewer).
+$features = story_features($pdo);
 
 $projectName = get_setting($pdo, 'project_name', APP_NAME);
 $projectFavicon = get_setting($pdo, 'project_favicon', '');
@@ -33,22 +36,27 @@ $scenes = $pdo->query("
 
 $sceneIds = array_map(static fn ($scene) => (int) $scene['scene_id'], $scenes);
 
-$elements = $pdo->query("
-    SELECT ie.interactive_element_id, ie.scene_id, ie.element_name, ie.element_type, ie.label,
-           ie.insight_title, ie.insight_text, ie.position_x, ie.position_y, ie.width, ie.height,
-           ie.appear_at_seconds, ie.pauses_video
-    FROM interactive_elements ie
-    WHERE ie.is_active = 1
-    ORDER BY ie.display_order ASC, ie.interactive_element_id ASC
-")->fetchAll();
-
-// Older hotspots may keep their text in linked dialogue rows instead of insight_text.
+$elements = [];
 $linkedDialogues = [];
-foreach ($pdo->query('SELECT interactive_element_id, speaker_name, dialogue_text FROM dialogues WHERE is_active = 1 AND interactive_element_id IS NOT NULL ORDER BY is_primary DESC, dialogue_id ASC')->fetchAll() as $row) {
-    $linkedDialogues[(int) $row['interactive_element_id']][] = ['speaker' => $row['speaker_name'], 'text' => $row['dialogue_text']];
+if ($features['hotspots']) {
+    $elements = $pdo->query("
+        SELECT ie.interactive_element_id, ie.scene_id, ie.element_name, ie.element_type, ie.label,
+               ie.insight_title, ie.insight_text, ie.position_x, ie.position_y, ie.width, ie.height,
+               ie.appear_at_seconds, ie.pauses_video
+        FROM interactive_elements ie
+        WHERE ie.is_active = 1
+        ORDER BY ie.display_order ASC, ie.interactive_element_id ASC
+    ")->fetchAll();
+
+    // Older hotspots may keep their text in linked dialogue rows instead of insight_text.
+    foreach ($pdo->query('SELECT interactive_element_id, speaker_name, dialogue_text FROM dialogues WHERE is_active = 1 AND interactive_element_id IS NOT NULL ORDER BY is_primary DESC, dialogue_id ASC')->fetchAll() as $row) {
+        $linkedDialogues[(int) $row['interactive_element_id']][] = ['speaker' => $row['speaker_name'], 'text' => $row['dialogue_text']];
+    }
 }
 
-$choices = $pdo->query('SELECT choice_id, scene_id, choice_text, target_scene_id, feedback_text FROM scene_choices WHERE is_active = 1 ORDER BY display_order ASC, choice_id ASC')->fetchAll();
+$choices = $features['choices']
+    ? $pdo->query('SELECT choice_id, scene_id, choice_text, target_scene_id, feedback_text FROM scene_choices WHERE is_active = 1 ORDER BY display_order ASC, choice_id ASC')->fetchAll()
+    : [];
 $reflections = $pdo->query('SELECT question_id, scene_id, question_text, question_type, options_text FROM reflection_questions WHERE is_active = 1 ORDER BY display_order ASC, question_id ASC')->fetchAll();
 
 $story = [];
@@ -143,6 +151,7 @@ $playerData = [
     'start' => $startSceneId,
     'initial' => $initialSceneId,
     'fresh' => isset($_GET['new']),
+    'features' => $features,
     'showTitle' => $viewerShowTitle,
     'showNumber' => $viewerShowSceneNumber,
     'allowFullscreen' => $viewerAllowFullscreen,
@@ -239,7 +248,7 @@ $playerData = [
                     <?php if ($thankYouMessage !== ''): ?>
                         <p><?php echo htmlspecialchars($thankYouMessage); ?></p>
                     <?php endif; ?>
-                    <?php if ($thankYouContacts): ?>
+                    <?php if ($thankYouContacts && ($features['hotspots'] || $features['choices'])): ?>
                         <div class="thankyou-contacts">
                             <h3>Need someone to talk to?</h3>
                             <ul>
@@ -250,8 +259,8 @@ $playerData = [
                         </div>
                     <?php endif; ?>
                     <div class="ending-actions thankyou-actions">
-                        <button type="button" class="btn" id="playAgainButton">Play again</button>
-                        <a class="btn btn-ghost" id="exitButton" href="<?php echo APP_BASE_PATH; ?>/">Exit</a>
+                        <button type="button" class="btn btn-ghost" id="playAgainButton">Watch again from the start</button>
+                        <a class="btn" id="exitButton" href="<?php echo APP_BASE_PATH; ?>/">Finish</a>
                     </div>
                 </div>
             </div>
@@ -259,7 +268,13 @@ $playerData = [
             <div class="overlay" id="startOverlay">
                 <div class="card start-card">
                     <h2><?php echo htmlspecialchars($projectName); ?></h2>
-                    <p>Watch Riley's story. When the story pauses, tap the glowing spots to look closer, answer a few questions, and choose what Riley does next.</p>
+                    <?php if ($features['hotspots'] || $features['choices']): ?>
+                        <p>Watch Riley's story. When the story pauses, tap the glowing spots to look closer, answer a few questions, and choose what Riley does next.</p>
+                    <?php elseif ($reflections): ?>
+                        <p>Watch Riley's story and listen closely. Some moments will pause so you can answer a few questions along the way.</p>
+                    <?php else: ?>
+                        <p>Watch Riley's story and listen closely.</p>
+                    <?php endif; ?>
                     <button type="button" class="btn" id="startButton">Play</button>
                 </div>
             </div>

@@ -35,6 +35,8 @@
     let firedTimed = new Set();
     let exploring = false;
     let finished = false; // true once an ending card has been shown
+    // Optional features (Settings → Scene Viewer). Off = no hotspot or choice data is sent at all.
+    const FEATURES = STORY.features || { hotspots: true, choices: true };
     let resumeAfterOverlay = false;
 
     // ---------- journey (kept only in this browser tab) ----------
@@ -286,6 +288,13 @@
     }
 
     function decideNext() {
+        if (!FEATURES.choices) {
+            // Watch-only story: scenes play in Display Order, then the thank-you screen.
+            const idx = STORY.order.indexOf(current.id);
+            const next = idx >= 0 && idx + 1 < STORY.order.length ? STORY.order[idx + 1] : null;
+            if (next) playScene(next); else finishStory();
+            return;
+        }
         if (current.choices.length) { showChoices(); return; }
         if (current.ending !== 'none') { showEnding(current.ending); return; }
         const next = linearNext();
@@ -371,6 +380,12 @@
         hide($('endingOverlay'));
         show($('thankyouOverlay'));
         $('playAgainButton').focus();
+    }
+
+    function finishStory() {
+        finished = true;
+        hide($('redflagCounter'));
+        showThankYou();
     }
 
     function restartStory() {

@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/features.php';
 
 $currentAdmin = require_admin();
 
 $pdo = getDatabaseConnection();
+$features = story_features($pdo);
 
 $errors = [];
 $values = [
@@ -175,6 +177,7 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                     </select>
                 </div>
 
+                <?php if ($features['choices']): ?>
                 <div class="form-field">
                     <label for="next_scene_id">Next Scene</label>
                     <select id="next_scene_id" name="next_scene_id">
@@ -186,8 +189,16 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <?php endif; ?>
             </div>
 
+            <?php if (!$features['choices']): ?>
+                <?php // Story choices are switched off: the scene joins the story in Display Order. ?>
+                <input type="hidden" name="next_scene_id" value="<?php echo htmlspecialchars((string) ($values['next_scene_id'] ?? '')); ?>">
+                <input type="hidden" name="ending_type" value="<?php echo htmlspecialchars((string) ($values['ending_type'] ?? 'none')); ?>">
+                <input type="hidden" name="choice_prompt" value="<?php echo htmlspecialchars((string) ($values['choice_prompt'] ?? '')); ?>">
+                <small class="inline-note">Scenes play one after another in Display Order.</small>
+            <?php else: ?>
             <div class="form-grid two-col">
                 <div class="form-field">
                     <label for="ending_type">Ending</label>
@@ -205,13 +216,18 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                     <small class="inline-note">Shown above this scene's choices (add them under Story Choices).</small>
                 </div>
             </div>
+            <?php endif; ?>
 
+            <?php if ($features['hotspots']): ?>
             <div class="form-field checkbox-field">
                 <label class="checkbox-wrap">
                     <input type="checkbox" name="is_interactive" value="1" <?php echo ((int) ($values['is_interactive'] ?? 1) === 1) ? 'checked' : ''; ?>>
                     <span>Interactive Scene</span>
                 </label>
             </div>
+            <?php elseif ((int) ($values['is_interactive'] ?? 1) === 1): ?>
+                <input type="hidden" name="is_interactive" value="1">
+            <?php endif; ?>
 
             <div class="form-actions">
                 <button type="submit" class="primary-btn">Save Scene</button>

@@ -177,6 +177,27 @@ function getCloudinaryConfig(): ?array
     return ['cloud' => $parts['host'], 'key' => urldecode($parts['user']), 'secret' => urldecode($parts['pass'])];
 }
 
+/** Where new uploads go, for the notice on the video pages. Null on a local install, where the folder is permanent. */
+function videoStorageStatus(): ?array
+{
+    try {
+        $cloudinary = getCloudinaryConfig();
+    } catch (RuntimeException $e) {
+        return ['ok' => false, 'text' => 'Uploads will fail: ' . $e->getMessage()];
+    }
+
+    if ($cloudinary !== null) {
+        return ['ok' => true, 'text' => 'Uploads are saved to Cloudinary (cloud "' . $cloudinary['cloud'] . '"), so they stay after the server restarts.'];
+    }
+
+    // Render sets RENDER=true; its disk is wiped on every restart and deploy.
+    if (env_value('RENDER') !== '') {
+        return ['ok' => false, 'text' => 'Uploads are saved on this server\'s temporary disk and will disappear when it restarts. Add CLOUDINARY_URL under Render → Environment and deploy again before uploading.'];
+    }
+
+    return null;
+}
+
 function isCloudinaryUrl(?string $path): bool
 {
     return is_string($path) && preg_match('#^https://res\.cloudinary\.com/#i', $path) === 1;

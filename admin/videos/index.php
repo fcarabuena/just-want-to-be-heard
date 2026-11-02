@@ -47,6 +47,11 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
             <a href="<?php echo APP_BASE_PATH; ?>/admin/videos/create.php" class="primary-btn">+ Create New Video</a>
         </div>
 
+        <?php $storageStatus = videoStorageStatus(); ?>
+        <?php if ($storageStatus !== null): ?>
+            <div class="flash-message <?php echo $storageStatus['ok'] ? 'flash-success' : 'flash-error'; ?>"><?php echo htmlspecialchars($storageStatus['text']); ?></div>
+        <?php endif; ?>
+
         <div class="studio-summary">
             <div class="summary-chip">
                 <span class="summary-label">Total Videos</span>

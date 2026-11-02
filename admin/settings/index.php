@@ -36,6 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'viewer_show_scene_number' => isset($_POST['viewer_show_scene_number']) ? '1' : '0',
         'viewer_show_nav' => isset($_POST['viewer_show_nav']) ? '1' : '0',
         'viewer_auto_advance' => isset($_POST['viewer_auto_advance']) ? '1' : '0',
+        'feature_hotspots' => isset($_POST['feature_hotspots']) ? '1' : '0',
+        'feature_choices' => isset($_POST['feature_choices']) ? '1' : '0',
         'default_video_autoplay' => isset($_POST['default_video_autoplay']) ? '1' : '0',
         'default_video_muted' => isset($_POST['default_video_muted']) ? '1' : '0',
         'default_video_controls' => isset($_POST['default_video_controls']) ? '1' : '0',
@@ -97,6 +99,12 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
 
         <?php if ($statusMessage !== ''): ?>
             <div class="flash-message flash-success"><?php echo htmlspecialchars($statusMessage); ?></div>
+        <?php endif; ?>
+
+        <?php if (in_array($_GET['feature_off'] ?? '', ['hotspots', 'choices'], true)): ?>
+            <div class="flash-message flash-error">
+                <?php echo ($_GET['feature_off'] === 'hotspots' ? 'Hotspots are' : 'Story choices are'); ?> switched off. Turn them on under Scene Viewer → Story Features.
+            </div>
         <?php endif; ?>
 
         <form method="POST" class="settings-form" enctype="multipart/form-data">
@@ -239,6 +247,16 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
                     <label class="check-row"><input type="checkbox" name="viewer_show_scene_number" <?php echo setting_value($settings, 'viewer_show_scene_number', '1') === '1' ? 'checked' : ''; ?>> Show scene number</label>
                     <label class="check-row"><input type="checkbox" name="viewer_show_nav" <?php echo setting_value($settings, 'viewer_show_nav', '1') === '1' ? 'checked' : ''; ?>> Show navigation controls</label>
                     <label class="check-row"><input type="checkbox" name="viewer_auto_advance" <?php echo setting_value($settings, 'viewer_auto_advance', '0') === '1' ? 'checked' : ''; ?>> Enable automatic transition to the next scene</label>
+                </div>
+
+                <div class="setting-section-header">
+                    <h3>Story Features</h3>
+                    <p>Off = watch-only story: scenes play one after another in Display Order, then the thank-you screen. Saved hotspots and choices are kept, so you can switch them back on any time.</p>
+                </div>
+
+                <div class="options-grid">
+                    <label class="check-row"><input type="checkbox" name="feature_hotspots" <?php echo setting_value($settings, 'feature_hotspots', '0') === '1' ? 'checked' : ''; ?>> Hotspots (glowing spots viewers tap to look closer)</label>
+                    <label class="check-row"><input type="checkbox" name="feature_choices" <?php echo setting_value($settings, 'feature_choices', '0') === '1' ? 'checked' : ''; ?>> Story choices, branching and ending cards</label>
                 </div>
             </div>
 

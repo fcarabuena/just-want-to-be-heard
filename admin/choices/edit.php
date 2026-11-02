@@ -2,7 +2,10 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+require_once __DIR__ . '/../../includes/features.php';
+
 $currentAdmin = require_admin();
+require_story_feature('choices');
 require_once __DIR__ . '/_form.php';
 
 $pdo = getDatabaseConnection();

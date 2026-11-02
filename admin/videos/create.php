@@ -99,6 +99,11 @@ include __DIR__ . '/../../includes/layout/admin-header.php';
             </div>
         <?php endif; ?>
 
+        <?php $storageStatus = videoStorageStatus(); ?>
+        <?php if ($storageStatus !== null): ?>
+            <div class="flash-message <?php echo $storageStatus['ok'] ? 'flash-success' : 'flash-error'; ?>"><?php echo htmlspecialchars($storageStatus['text']); ?></div>
+        <?php endif; ?>
+
         <form method="POST" class="studio-form" enctype="multipart/form-data">
             <div class="form-grid two-col">
                 <div class="form-field">

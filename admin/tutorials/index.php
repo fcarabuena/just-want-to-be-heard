@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/app.php';
 require_once __DIR__ . '/../../includes/auth.php';
+require_once __DIR__ . '/../../includes/features.php';
 
 $currentAdmin = require_admin();
 
@@ -8,6 +9,7 @@ $currentAdmin = require_admin();
 $tutorials = [
     [
         'id' => 'hotspot-add',
+        'feature' => 'hotspots',
         'title' => 'Add a glowing hotspot',
         'length' => '2 min',
         'summary' => 'Put a clickable glowing spot on an object in a scene, then test it in the player.',
@@ -23,6 +25,7 @@ $tutorials = [
     ],
     [
         'id' => 'hotspot-edit',
+        'feature' => 'hotspots',
         'title' => 'Move, fix or hide a hotspot',
         'length' => '1 min',
         'summary' => 'After you swap in your own animation, redraw old hotspots so they sit on the right object.',
@@ -47,6 +50,8 @@ $tutorials = [
         ],
     ],
 ];
+// Tutorials for a switched-off feature are hidden until it is turned back on.
+$tutorials = array_values(array_filter($tutorials, static fn ($tutorial) => empty($tutorial['feature']) || story_features()[$tutorial['feature']]));
 
 include __DIR__ . '/../../includes/layout/admin-header.php';
 ?>
