@@ -192,7 +192,19 @@ function videoStorageStatus(): ?array
 
     // Render sets RENDER=true; its disk is wiped on every restart and deploy.
     if (env_value('RENDER') !== '') {
-        return ['ok' => false, 'text' => 'Uploads are saved on this server\'s temporary disk and will disappear when it restarts. Add CLOUDINARY_URL under Render → Environment and deploy again before uploading.'];
+        $text = 'Uploads are saved on this server\'s temporary disk and will disappear when it restarts. Add CLOUDINARY_URL under Render → Environment and deploy again before uploading.';
+
+        // Name (never the value of) any setting that looks like a mistyped CLOUDINARY_URL.
+        $similar = array_values(array_filter(array_keys(getenv() ?: []), static fn ($name) => stripos($name, 'cloud') !== false && $name !== 'CLOUDINARY_URL'));
+        if ($similar) {
+            $text .= ' The server has a setting named "' . implode('", "', $similar) . '": rename it to exactly CLOUDINARY_URL (capital letters, underscore, no spaces).';
+        } elseif (getenv('CLOUDINARY_URL') !== false) {
+            $text .= ' CLOUDINARY_URL exists but is empty: paste its value again.';
+        } else {
+            $text .= ' The server has no setting with "cloud" in its name, so the key was not saved to this service.';
+        }
+
+        return ['ok' => false, 'text' => $text];
     }
 
     return null;
