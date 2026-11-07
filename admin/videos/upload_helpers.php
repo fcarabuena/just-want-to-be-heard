@@ -164,17 +164,31 @@ define('CLOUDINARY_MAX_VIDEO_BYTES', 100 * 1024 * 1024);
 /** Cloudinary account from CLOUDINARY_URL (cloudinary://API_KEY:API_SECRET@CLOUD_NAME), or null to keep files on this server. */
 function getCloudinaryConfig(): ?array
 {
-    $url = env_value('CLOUDINARY_URL');
+    // Forgive common paste slips: surrounding spaces or quotes, and the whole "CLOUDINARY_URL=..." line.
+    $url = trim(env_value('CLOUDINARY_URL'), " \t\r\n\"'");
+    $url = trim(preg_replace('/^CLOUDINARY_URL\s*=\s*/i', '', $url), " \t\r\n\"'");
     if ($url === '') {
         return null;
     }
 
-    $parts = parse_url($url);
-    if (($parts['scheme'] ?? '') !== 'cloudinary' || empty($parts['user']) || empty($parts['pass']) || empty($parts['host'])) {
-        throw new RuntimeException('CLOUDINARY_URL is not in the form cloudinary://API_KEY:API_SECRET@CLOUD_NAME. Copy it again from the Cloudinary dashboard.');
+    if (preg_match('#^cloudinary://([^:@/\s]+):([^@/\s]+)@([^/?\#\s]+)/?$#i', $url, $match) === 1 && strpbrk($url, '<>*') === false) {
+        return ['cloud' => $match[3], 'key' => rawurldecode($match[1]), 'secret' => rawurldecode($match[2])];
     }
 
-    return ['cloud' => $parts['host'], 'key' => urldecode($parts['user']), 'secret' => urldecode($parts['pass'])];
+    // Say which part is wrong, without ever repeating the secret.
+    if (stripos($url, 'cloudinary://') !== 0) {
+        $problem = 'it should start with cloudinary://';
+    } elseif (strpbrk($url, '<>*') !== false) {
+        $problem = 'it still contains placeholder text (< >) or hidden ***** characters. In Cloudinary, click the eye icon to reveal the API secret before copying';
+    } elseif (strpos($url, '@') === false) {
+        $problem = 'the cloud name is missing at the end (…@CLOUD_NAME)';
+    } elseif (strpos(substr($url, strlen('cloudinary://')), ':') === false) {
+        $problem = 'the API secret is missing (it should be API_KEY:API_SECRET before the @)';
+    } else {
+        $problem = 'it contains spaces or extra characters';
+    }
+
+    throw new RuntimeException('CLOUDINARY_URL in Render → Environment is not in the form cloudinary://API_KEY:API_SECRET@CLOUD_NAME: ' . $problem . '.');
 }
 
 /** Where new uploads go, for the notice on the video pages. Null on a local install, where the folder is permanent. */
